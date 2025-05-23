@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DAA Mini Project - Inversion Count</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f8;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #5e60ce;
+      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #4b4ac9;
+    }
+    .output, .theory {
+      background-color: #eef1f8;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #222;
+    }
+    code {
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DAA Mini Project: Inversion Count</h1>
+
+    <p>Enter array elements separated by commas (e.g., 8, 4, 2, 1):</p>
+    <input type="text" id="arrayInput" placeholder="Enter array elements...">
+    <button onclick="compareAlgorithms()">Compare Algorithms</button>
+
+    <div class="output" id="result"></div>
+
+    <div class="theory">
+      <h2>📚 DAA Theory Explanation</h2>
+      <h3>What is an Inversion?</h3>
+      <p>
+        An <strong>inversion</strong> in an array is a pair of indices <code>(i, j)</code> such that <code>i &lt; j</code> and <code>arr[i] &gt; arr[j]</code>.
+      </p>
+
+      <h3>Approach 1: Brute Force</h3>
+      <ul>
+        <li>Simple nested loop approach.</li>
+        <li>Time Complexity: <code>O(n²)</code></li>
+        <li>Good for understanding, but inefficient for large arrays.</li>
+      </ul>
+
+      <h3>Approach 2: Decrease-and-Conquer (Modified Merge Sort)</h3>
+      <ul>
+        <li>Uses the divide-and-conquer principle of Merge Sort.</li>
+        <li>Counts inversions during the merge step.</li>
+        <li>Time Complexity: <code>O(n log n)</code></li>
+        <li>Much more efficient for large inputs.</li>
+      </ul>
+
+      <h3>Conclusion:</h3>
+      <p>
+        The <strong>Decrease-and-Conquer approach</strong> is more efficient and scalable, especially for large datasets.
+        It highlights how algorithm design can significantly impact performance.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Brute Force Algorithm
+    function bruteForceInversions(arr) {
+      let count = 0;
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          if (arr[i] > arr[j]) count++;
+        }
+      }
+      return count;
+    }
+
+    // Decrease-and-Conquer Algorithm using Merge Sort
+    function mergeSortAndCount(arr) {
+      function mergeSort(arr) {
+        if (arr.length <= 1) return [arr, 0];
+        const mid = Math.floor(arr.length / 2);
+        const [left, leftInv] = mergeSort(arr.slice(0, mid));
+        const [right, rightInv] = mergeSort(arr.slice(mid));
+        const [merged, splitInv] = mergeAndCount(left, right);
+        return [merged, leftInv + rightInv + splitInv];
+      }
+
+      function mergeAndCount(left, right) {
+        let i = 0, j = 0, count = 0;
+        const merged = [];
+        while (i < left.length && j < right.length) {
+          if (left[i] <= right[j]) {
+            merged.push(left[i++]);
+          } else {
+            merged.push(right[j++]);
+            count += (left.length - i);
+          }
+        }
+        return [merged.concat(left.slice(i)).concat(right.slice(j)), count];
+      }
+
+      return mergeSort(arr)[1];
+    }
+
+    function compareAlgorithms() {
+      const input = document.getElementById("arrayInput").value;
+      const arr = input.split(",").map(x => x.trim()).map(Number);
+
+      if (arr.some(isNaN) || arr.length === 0) {
+        document.getElementById("result").innerHTML = 
+          "<p style='color:red;'>Please enter a valid list of numbers separated by commas.</p>";
+        return;
+      }
+
+      const t0 = performance.now();
+      const bruteCount = bruteForceInversions([...arr]);
+      const t1 = performance.now();
+
+      const t2 = performance.now();
+      const mergeCount = mergeSortAndCount([...arr]);
+      const t3 = performance.now();
+
+      if (bruteCount !== mergeCount) {
+        document.getElementById("result").innerHTML = 
+          `<p style="color:red;">Error: Both algorithms returned different inversion counts!<br>
+          Brute Force: ${bruteCount}, Decrease-and-Conquer: ${mergeCount}</p>`;
+        return;
+      }
+
+      // Always recommend Decrease-and-Conquer for this project
+      document.getElementById("result").innerHTML = `
+        <h3>🔍 Comparison Results</h3>
+        <p><span class="highlight">Brute Force:</span> ${bruteCount} inversions (Time: ${(t1 - t0).toFixed(3)} ms)</p>
+        <p><span class="highlight">Decrease-and-Conquer:</span> ${mergeCount} inversions (Time: ${(t3 - t2).toFixed(3)} ms)</p>
+        <p><strong>Recommended Algorithm:</strong> Decrease-and-Conquer (Merge Sort based)</p>
+        <p>
+          <em>Reason:</em> It has a better time complexity <code>O(n log n)</code>, making it much more efficient and scalable
+          for larger arrays compared to the brute force algorithm which is <code>O(n²)</code>.
+        </p>
+      `;
+    }
+  </script>
+</body>
+</html>
